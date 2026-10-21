@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071426">
+  <title>TRADER ANIKE AI</title>
+  <style>
+    :root{color-scheme:dark;--bg:#071426;--panel:#10233c;--line:#294361;--blue:#5bbcff;--white:#f3f7ff;--muted:#a9bad0}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top,#15375a,var(--bg) 55%);color:var(--white);font-family:system-ui,-apple-system,"Noto Sans Bengali",sans-serif}
+    main{max-width:680px;margin:auto;padding:20px 15px 38px}.brand{text-align:center;padding:12px 0 20px}.brand h1{font-size:clamp(25px,6vw,36px);letter-spacing:1px;margin:0;color:var(--blue)}.brand p{margin:7px 0 0;color:var(--muted)}
+    .card{background:rgba(16,35,60,.96);border:1px solid var(--line);border-radius:18px;padding:17px;margin:12px 0;box-shadow:0 10px 25px #0002}
+    label{display:block;color:#d8e8fb;font-size:14px;margin:0 0 7px}input,select,button{font:inherit}input[type=text],select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#09192c;color:white;margin-bottom:14px}
+    input[type=file]{width:100%;padding:12px;border:1px dashed #51779f;border-radius:12px;background:#09192c;color:var(--muted)}
+    button{border:0;border-radius:12px;padding:13px 16px;font-weight:750;cursor:pointer}.primary{width:100%;background:linear-gradient(90deg,#48aaff,#6b8cff);color:#041326}.secondary{background:#1b3857;color:white;border:1px solid var(--line)}button:disabled{opacity:.55;cursor:wait}
+    #preview{width:100%;max-height:340px;object-fit:contain;border-radius:12px;margin-top:12px;display:none;background:#071426}
+    .hint,.small{font-size:13px;color:var(--muted);line-height:1.6}.result{display:none}.signal{text-align:center;font-size:28px;font-weight:850;letter-spacing:1px}.wait{color:#ffcc68}.up{color:#66e3a2}.down{color:#ff8282}
+    .bars{display:grid;grid-template-columns:1fr 1fr;gap:12px}.metric{padding:14px;border-radius:13px;background:#09192c}.metric strong{display:block;font-size:25px;margin-top:5px}.bar{height:8px;background:#253b54;border-radius:99px;overflow:hidden;margin-top:9px}.bar span{height:100%;display:block;width:50%;background:var(--blue)}
+    .details{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.detail{background:#09192c;border-radius:12px;padding:12px;overflow-wrap:anywhere}.detail b{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}.detail span{font-weight:700}
+    #status{margin-top:10px;white-space:pre-wrap;color:#d8e8fb;font-size:14px}.warning{border-left:3px solid #ffcc68;padding:10px 12px;background:#322b1b;border-radius:8px;color:#ffe4a6;font-size:13px;line-height:1.55}
+    footer{text-align:center;color:var(--muted);font-size:12px;padding:10px}
+  </style>
+</head>
+<body>
+<main>
+  <header class="brand"><h1>TRADER ANIKE</h1><p>AI Chart Analysis · বাংলা ভয়েস সিগন্যাল</p></header>
+  <section class="card">
+    <label for="asset">মার্কেট / অ্যাসেট (ঐচ্ছিক)</label>
+    <input id="asset" type="text" value="Quotex chart" placeholder="যেমন: EUR/USD">
+    <label for="timeframe">ক্যান্ডেল টাইমফ্রেম</label>
+    <select id="timeframe"><option>5 seconds</option><option>15 seconds</option><option>1 minute</option><option>5 minutes</option></select>
+    <label for="price">বর্তমান মূল্য (জানা থাকলে লিখুন)</label>
+    <input id="price" type="text" placeholder="যেমন: 1.08450">
+    <label for="image">চার্টের স্ক্রিনশট দিন (PNG/JPG/WEBP, সর্বোচ্চ ৫ MB)</label>
+    <input id="image" type="file" accept="image/png,image/jpeg,image/webp">
+    <img id="preview" alt="Chart screenshot preview">
+    <p class="hint">ক্যান্ডেল, টাইমফ্রেম ও প্রাইস স্কেল যেন স্পষ্ট দেখা যায়। স্ক্রিনশটে ব্যক্তিগত তথ্য রাখবেন না।</p>
+    <button id="analyze" class="primary">চার্ট বিশ্লেষণ করুন</button>
+    <div id="status" role="status"></div>
+  </section>
+
+  <section id="result" class="card result" aria-live="polite">
+    <div id="signal" class="signal wait">WAIT</div>
+    <p class="small" style="text-align:center">পরের ক্যান্ডেলের AI-অনুমান — নিশ্চিত পূর্বাভাস নয়</p>
+    <div class="bars">
+      <div class="metric"><span>UP সম্ভাবনা</span><strong id="up">50%</strong><div class="bar"><span id="upbar"></span></div></div>
+      <div class="metric"><span>DOWN সম্ভাবনা</span><strong id="down">50%</strong><div class="bar"><span id="downbar"></span></div></div>
+    </div>
+    <div class="details">
+      <div class="detail"><b>সম্ভাব্য এন্ট্রি লেভেল</b><span id="entry">নির্ধারণ করা যায়নি</span></div>
+      <div class="detail"><b>কাছের রাউন্ড নাম্বার</b><span id="round">নির্ধারণ করা যায়নি</span></div>
+      <div class="detail"><b>ছবির মান</b><span id="quality">আংশিক</span></div>
+      <div class="detail"><b>সিগন্যাল</b><span id="signal2">WAIT</span></div>
+    </div>
+    <h3>বিশ্লেষণ</h3><p id="reason"></p>
+    <div class="warning" id="risk"></div>
+    <button id="speak" class="secondary" style="width:100%;margin-top:12px">বাংলায় পড়ে শোনান 🔊</button>
+  </section>
+  <section class="card">
+    <div class="warning">সতর্কতা: এই অ্যাপ স্ক্রিনশট থেকে AI-এর আনুমানিক মতামত দেয়। শতাংশগুলো ব্যাকটেস্ট করা জয়ের হার নয়। ৫-সেকেন্ডের ক্যান্ডেলে শব্দ, দেরি ও দ্রুত মূল্য পরিবর্তনের কারণে ভুল বেশি হতে পারে। আগে ডেমোতে পরীক্ষা করুন; হারানোর সামর্থ্যের বাইরে অর্থ ঝুঁকিতে দেবেন না।</div>
+    <p class="small">API key ব্রাউজারে রাখা হয় না; সার্ভারের .env ফাইলে রাখতে হবে। এই অ্যাপ স্বয়ংক্রিয়ভাবে Quotex-এ ট্রেড করে না।</p>
+  </section>
+  <footer>TRADER ANIKE AI · Educational prototype</footer>
+</main>
+<script>
+const fileInput=document.getElementById('image'), preview=document.getElementById('preview');
+const statusEl=document.getElementById('status'), resultEl=document.getElementById('result');
+let lastSpoken='';
+fileInput.addEventListener('change',()=>{
+  const f=fileInput.files[0]; preview.style.display='none';
+  if(!f)return;
+  if(f.size>5*1024*1024){statusEl.textContent='ছবিটি ৫ MB-এর চেয়ে বড়। ছোট ছবি বেছে নিন।';fileInput.value='';return;}
+  preview.src=URL.createObjectURL(f);preview.style.display='block';statusEl.textContent='';
+});
+function val(id, value){document.getElementById(id).textContent=value ?? 'নির্ধারণ করা যায়নি';}
+document.getElementById('analyze').addEventListener('click',async()=>{
+  const f=fileInput.files[0];
+  if(!f){statusEl.textContent='আগে একটি চার্টের স্ক্রিনশট বেছে নিন।';return;}
+  const btn=document.getElementById('analyze');btn.disabled=true;statusEl.textContent='AI চার্ট বিশ্লেষণ করছে…';resultEl.style.display='none';
+  const body=new FormData();body.append('image',f);body.append('timeframe',document.getElementById('timeframe').value);body.append('asset',document.getElementById('asset').value);body.append('current_price',document.getElementById('price').value);
+  try{
+    const r=await fetch('/api/analyze',{method:'POST',body});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||'বিশ্লেষণ ব্যর্থ হয়েছে।');
+    val('signal',d.signal);val('signal2',d.signal);const s=document.getElementById('signal');s.className='signal '+(d.signal==='UP'?'up':d.signal==='DOWN'?'down':'wait');
+    val('up',d.up_percent+'%');val('down',d.down_percent+'%');document.getElementById('upbar').style.width=d.up_percent+'%';document.getElementById('downbar').style.width=d.down_percent+'%';
+    val('entry',d.entry_level);val('round',d.round_number);val('quality',({clear:'পরিষ্কার',partial:'আংশিক',poor:'দুর্বল'})[d.image_quality]||d.image_quality);val('reason',d.reason_bn);val('risk',d.risk_bn+' '+d.disclaimer);
+    lastSpoken=`সিগন্যাল ${d.signal}। আপ সম্ভাবনা ${d.up_percent} শতাংশ। ডাউন সম্ভাবনা ${d.down_percent} শতাংশ। এন্ট্রি লেভেল ${d.entry_level||'নির্ধারণ করা যায়নি'}। ${d.reason_bn} সতর্কতা, এটি নিশ্চিত পূর্বাভাস নয়।`;
+    resultEl.style.display='block';statusEl.textContent='বিশ্লেষণ সম্পন্ন।';resultEl.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){statusEl.textContent='সমস্যা: '+e.message;}finally{btn.disabled=false;}
+});
+document.getElementById('speak').addEventListener('click',()=>{
+  if(!lastSpoken){statusEl.textContent='আগে চার্ট বিশ্লেষণ করুন।';return;}
+  if(!('speechSynthesis' in window)){statusEl.textContent='এই ব্রাউজারে ভয়েস সুবিধা নেই।';return;}
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(lastSpoken);u.lang='bn-BD';u.rate=0.9;speechSynthesis.speak(u);
+});
+</script>
+</body>
+</html>
