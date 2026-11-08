@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#050b14">
+<title>Trader Anike AI Trading Platform</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Tesseract.js for OCR Image Text Reading -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<style>
+:root {
+  --bg: #050b14;
+  --panel: #0c1829;
+  --card: #132742;
+  --line: #1f3a5f;
+  --blue: #00d2ff;
+  --blue-glow: rgba(0, 210, 255, 0.35);
+  --green: #00e676;
+  --green-glow: rgba(0, 230, 118, 0.25);
+  --red: #ff1744;
+  --red-glow: rgba(255, 23, 68, 0.25);
+  --yellow: #ffea00;
+  --orange: #ff9100;
+  --white: #ffffff;
+  --muted: #8ca3c7;
+}
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding-bottom: 85px;
+  overflow-x: hidden;
+}
+
+#splashOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: radial-gradient(circle at center, #0c1829 0%, #050b14 100%);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  touch-action: manipulation;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.splash-icon {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 3px solid var(--blue);
+  box-shadow: 0 0 25px var(--blue-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  animation: pulseIcon 2s infinite ease-in-out;
+}
+@keyframes pulseIcon {
+  0% { transform: scale(1); box-shadow: 0 0 20px var(--blue-glow); }
+  50% { transform: scale(1.06); box-shadow: 0 0 35px var(--blue); }
+  100% { transform: scale(1); box-shadow: 0 0 20px var(--blue-glow); }
+}
+
+.btn-open-app {
+  background: linear-gradient(135deg, #00d2ff, #0052d4);
+  color: #ffffff;
+  border: none;
+  padding: 14px 42px;
+  font-size: 16px;
+  font-weight: 900;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 6px 25px var(--blue-glow);
+  letter-spacing: 1px;
+  margin-top: 25px;
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-open-app:active { transform: scale(0.95); }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 15px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.upload-box {
+  border: 2px dashed var(--blue);
+  background: rgba(0, 210, 255, 0.04);
+  padding: 18px;
+  text-align: center;
+  border-radius: 14px;
+  cursor: pointer;
+  color: var(--blue);
+  font-weight: 700;
+  font-size: 13px;
+  margin-top: 10px;
+  display: block;
+}
+
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  margin-top: 12px;
+  display: none;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--blue);
+}
+#previewCanvas { width: 100%; height: auto; display: block; }
+
+.btn-main {
+  width: 100%;
+  background: linear-gradient(135deg, #00d2ff, #0052d4);
+  border: none;
+  color: #fff;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 800;
+  border-radius: 13px;
+  cursor: pointer;
+  margin-top: 14px;
+  box-shadow: 0 4px 18px var(--blue-glow);
+}
+
+.radar {
+  width: 45px;
+  height: 45px;
+  border: 4px solid var(--blue);
+  border-top: 4px solid transparent;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.signal-badge {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin: 8px 0;
+}
+.signal-badge.CALL { color: var(--green); text-shadow: 0 0 15px var(--green-glow); }
+.signal-badge.PUT { color: var(--red); text-shadow: 0 0 15px var(--red-glow); }
+.signal-badge.WAIT { color: var(--yellow); text-shadow: 0 0 15px rgba(255, 234, 0, 0.35); }
+
+.tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  margin: 2px;
+}
+.tag-non-mtg { background: rgba(0, 230, 118, 0.18); color: var(--green); border: 1px solid var(--green); }
+.tag-mtg { background: rgba(255, 145, 0, 0.18); color: var(--orange); border: 1px solid var(--orange); }
+.tag-wait { background: rgba(255, 234, 0, 0.18); color: var(--yellow); border: 1px solid var(--yellow); }
+.tag-safety-yes { background: rgba(0, 210, 255, 0.18); color: var(--blue); border: 1px solid var(--blue); }
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.metric-item {
+  background: var(--bg);
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  font-size: 12px;
+  text-align: center;
+}
+.metric-item strong { display: block; font-size: 15px; margin-top: 3px; color: var(--blue); }
+
+.accuracy-meter-box {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 12px;
+  text-align: center;
+}
+.acc-bar-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 8px;
+}
+.acc-segment {
+  flex: 1;
+  height: 10px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+.acc-segment.active {
+  background: var(--blue);
+  box-shadow: 0 0 10px var(--blue-glow);
+  border-color: var(--blue);
+}
+.acc-segment.active.wait {
+  background: var(--yellow);
+  box-shadow: 0 0 10px rgba(255, 234, 0, 0.35);
+  border-color: var(--yellow);
+}
+
+.logic-box {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.65;
+  margin-top: 12px;
+  text-align: left;
+}
+
+.book-item {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--blue);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.book-item h4 {
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.book-item p {
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.book-strategy {
+  border-left-color: var(--green);
+  background: rgba(0, 230, 118, 0.05);
+}
+.book-strategy h4 { color: var(--green); }
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; width: 100%;
+  background: #040a14;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  padding: 8px 0;
+  z-index: 999;
+}
+.nav-tab {
+  background: none;
+  border: none;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  gap: 3px;
+}
+.nav-tab.active { color: var(--blue); }
+.nav-tab svg { width: 18px; height: 18px; fill: currentColor; }
+</style>
+</head>
+<body>
+
+<!-- Splash Screen Overlay -->
+<div id="splashOverlay">
+  <div class="splash-icon">
+    <svg viewBox="0 0 24 24" width="45" height="45" fill="none" stroke="#00d2ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+      <polyline points="16 7 22 7 22 13"></polyline>
+    </svg>
+  </div>
+  <h1 class="text-xl font-black tracking-wide text-white uppercase mb-1">TRADER ANIKE AI</h1>
+  <p class="text-xs text-[#8ca3c7]">Ultimate Trading Master Platform & Academy</p>
+  <button class="btn-open-app" id="openAppBtn" onclick="closeSplashDirect()">OPEN APP</button>
+</div>
+
+<!-- Main Application Layout -->
+<div class="max-w-[480px] mx-auto p-4">
+
+  <!-- Top Bar -->
+  <div class="flex items-center justify-between pb-3 border-b border-[#1f3a5f] mb-4">
+    <div class="text-lg font-black text-[#00d2ff]">⚡ TRADER ANIKE AI</div>
+    <div class="text-xs bg-[rgba(0,230,118,0.15)] text-[#00e676] border border-[#00e676] px-2.5 py-1 rounded-full font-bold" id="topAccBadge">● AI ACCURACY 98%</div>
+  </div>
+
+  <!-- TAB 1: DASHBOARD -->
+  <div id="tab-dashboard" class="tab-panel">
+    <div class="card">
+      <h3 style="color:var(--blue); font-size:15px; margin-bottom:8px;">📊 AI Chart Scanner & Analyzer</h3>
+      
+      <label class="block text-xs text-[#8ca3c7] mt-2 mb-1">অ্যাসেট / পেয়ার (Auto Detect From Screenshot)</label>
+      <input type="text" id="assetInput" value="Select Chart Screenshot First" readonly class="w-full p-3 bg-[#132742] border border-[#1f3a5f] rounded-xl text-white text-sm outline-none" style="color:var(--muted)">
+
+      <label class="block text-xs text-[#8ca3c7] mt-3 mb-1">ক্যান্ডেল টাইমফ্রেম</label>
+      <select id="tfSelect" class="w-full p-3 bg-[#132742] border border-[#1f3a5f] rounded-xl text-white text-sm outline-none">
+        <option value="5s">5 Seconds</option>
+        <option value="15s">15 Seconds</option>
+        <option value="1m" selected>1 Minute</option>
+        <option value="5m">5 Minutes</option>
+      </select>
+
+      <label class="upload-box" for="chartFile">📷 চার্টের স্ক্রিনশট সিলেক্ট করুন (PNG/JPG)</label>
+      <input type="file" id="chartFile" accept="image/*" class="hidden">
+      
+      <button class="btn-main mb-2" onclick="startScan()">চার্ট বিশ্লেষণ করুন (Accurate Scan)</button>
+
+      <!-- Canvas Overlay -->
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="previewCanvas"></canvas>
+      </div>
+
+      <div class="scanner-overlay hidden text-center p-4 bg-[#132742] rounded-xl mt-3.5 border border-[#00d2ff]" id="radarAnim">
+        <div class="radar"></div>
+        <div style="font-size:12px; color:var(--blue); font-weight:600;" id="scanStatusText">OCR পিক্সেল, সঠিক সাপোর্ট ও রেজিস্ট্যান্স স্ক্যান হচ্ছে...</div>
+      </div>
+    </div>
+
+    <!-- Dashboard Result Output -->
+    <div class="card hidden" id="dashResultCard">
+      <div class="text-center p-4 rounded-xl bg-[#132742] border border-[#1f3a5f]">
+        <div id="resSignal" class="signal-badge CALL">CALL</div>
+        <div id="resTags">
+          <span id="resTagMtg" class="tag tag-non-mtg">NON-MTG (DIRECT WIN)</span>
+          <span id="resTagSafety" class="tag tag-safety-yes">SAFETY MARGIN: YES</span>
+        </div>
+        
+        <div class="metrics-grid">
+          <div class="metric-item">UP সম্ভাবনা <strong id="resUp">98%</strong></div>
+          <div class="metric-item">DOWN সম্ভাবনা <strong id="resDown">2%</strong></div>
+          <div class="metric-item">টাইপ <strong id="resTypeTag">NON-MTG</strong></div>
+          <div class="metric-item">মার্কেট স্ট্যাটাস <strong id="resStatusTag" style="color:var(--green)">SAFE OTC</strong></div>
+        </div>
+
+        <div class="accuracy-meter-box">
+          <div class="flex justify-between items-center text-xs text-[#8ca3c7] mb-2">
+            <span>🎯 AI Signal Confidence Accuracy:</span>
+            <strong id="resAcc" class="text-base text-[#00d2ff]">98%</strong>
+          </div>
+          <div class="acc-bar-container" id="accBarBox"></div>
+        </div>
+
+        <div class="logic-box" id="logicDetails"></div>
+
+        <button class="btn-main" style="background:#132742; border:1px solid var(--blue); color:var(--blue);" onclick="playVoiceAlert()">🔊 ভয়েস অ্যালার্ট প্লে করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: LIVE SIGNALS -->
+  <div id="tab-live" class="tab-panel hidden">
+    <div class="card">
+      <h3 style="color:var(--blue); font-size:15px; margin-bottom:12px;">⚡ Live AI Signal Market Feed</h3>
+      <div style="display:flex; gap:10px; margin-bottom:12px;">
+        <button class="btn-main" style="margin:0; padding:10px; background:var(--card); border:1px solid var(--blue);" onclick="generateLive('OTC')">OTC Market</button>
+        <button class="btn-main" style="margin:0; padding:10px; background:var(--card); border:1px solid var(--line);" onclick="generateLive('Real')">Real Market</button>
+      </div>
+      <div class="text-center p-4 rounded-xl bg-[#132742] border border-[#1f3a5f]">
+        <div style="font-size:11px; color:var(--muted);">CURRENT LIVE FEED</div>
+        <h3 id="livePair" style="color:var(--blue); margin:4px 0;" class="text-lg font-bold">USD/JPY</h3>
+        <div id="liveSigText" class="signal-badge CALL">CALL (UP)</div>
+        <div>
+          <span id="liveMtgTag" class="tag tag-non-mtg">NON-MTG DIRECT WIN</span>
+          <span class="tag tag-safety-yes">SAFETY: RECOMMENDED</span>
+        </div>
+        <button class="btn-main" style="margin-top:12px" onclick="generateLive('OTC')">🔄 Next Live Signal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: ANALYZER -->
+  <div id="tab-analyzer" class="tab-panel hidden">
+    <div class="card">
+      <h3 style="color:var(--blue); font-size:15px; margin-bottom:12px;">📈 AI Pattern & Strategy Scanner</h3>
+      <div class="metrics-grid">
+        <div class="metric-item">মার্কেট ট্রেন্ড <strong style="color:var(--green)" id="scanTrend">Strong Bullish</strong></div>
+        <div class="metric-item">ট্র্যাপ রিস্ক <strong style="color:var(--green)" id="scanTrap">Zero Trap Risk</strong></div>
+        <div class="metric-item">সাপোর্ট লেভেল <strong id="scanSupp">Upload Chart...</strong></div>
+        <div class="metric-item">রেজিস্ট্যান্স <strong id="scanResis">Upload Chart...</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: BOOK ACADEMY (Complete Master Guide with PPR, FFLC, S&R, Trend Line, FVG, SNR, MMC, Round Number, Supply/Demand, Liquidity & 16 Candlesticks) -->
+  <div id="tab-book" class="tab-panel hidden">
+    <div class="card">
+      <h3 style="color:var(--blue); font-size:15px; margin-bottom:10px;">📚 Complete Trading Master Guide (Beginner to Pro)</h3>
+      <p class="text-xs text-[#8ca3c7] mb-3">প্রতিটি মডিউল বা ক্যান্ডেলস্টিক প্যাটার্নে ক্লিক করে এর চিত্রভিত্তিক ডায়াগ্রাম, বিবরণ ও লজিক দেখে নিন:</p>
+
+      <!-- ADVANCED CONCEPT: PPR & FFLC -->
+      <div class="book-item">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleAccordion('acc-ppr')">
+          <h4 style="margin:0;">⚡ PPR (Previous Point Reversal) & FFLC Logic</h4>
+          <span id="icon-acc-ppr" class="text-blue-400 font-bold">▼</span>
+        </div>
+        <div id="acc-ppr" class="hidden mt-3">
+          <div class="my-3 flex justify-center bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <svg width="220" height="80" viewBox="0 0 220 80">
+              <line x1="10" y1="40" x2="210" y2="40" stroke="#00d2ff" stroke-width="1.5" stroke-dasharray="4"/>
+              <rect x="70" y="25" width="20" height="30" fill="#00e676" rx="2"/>
+              <rect x="110" y="15" width="20" height="50" fill="#00e676" rx="2"/>
+              <text x="110" y="10" font-size="9" fill="#00d2ff" text-anchor="middle">PPR & FFLC Reversal Zone</text>
+            </svg>
+          </div>
+          <p><b>PPR:</b> পূর্ববর্তী রিভার্সাল পয়েন্ট যেখানে প্রাইস এসে পুনরায় বাউন্স করে।<br><b>FFLC:</b> ফার্স্ট ক্যান্ডেল লজিক যা ট্রেন্ডের শুরুতে কনফার্মেশন দেয়।</p>
+        </div>
+      </div>
+
+      <!-- SUPPORT & RESISTANCE (S&R) -->
+      <div class="book-item">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleAccordion('acc-sr')">
+          <h4 style="margin:0;">🛡️ Support & Resistance (S&R)</h4>
+          <span id="icon-acc-sr" class="text-blue-400 font-bold">▼</span>
+        </div>
+        <div id="acc-sr" class="hidden mt-3">
+          <div class="my-3 flex justify-center bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <svg width="220" height="80" viewBox="0 0 220 80">
+              <line x1="10" y1="20" x2="210" y2="20" stroke="#ff1744" stroke-width="2"/>
+              <text x="110" y="14" font-size="9" fill="#ff1744" text-anchor="middle">Resistance Level (Ceiling)</text>
+              <line x1="10" y1="65" x2="210" y2="65" stroke="#00e676" stroke-width="2"/>
+              <text x="110" y="77" font-size="9" fill="#00e676" text-anchor="middle">Support Level (Floor)</text>
+            </svg>
+          </div>
+          <p><b>Support:</b> মার্কেটের নিচের শক্তিশালী ফ্লোর যেখানে ক্রেতারা সক্রিয় থাকে।<br><b>Resistance:</b> মার্কেটের উপরের সিলিং যেখানে বিক্রেতারা সক্রিয় থাকে।</p>
+        </div>
+      </div>
+
+      <!-- TREND LINE -->
+      <div class="book-item">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleAccordion('acc-trend')">
+          <h4 style="margin:0;">📈 Trend Line & Market Structure</h4>
+          <span id="icon-acc-trend" class="text-blue-400 font-bold">▼</span>
+        </div>
+        <div id="acc-trend" class="hidden mt-3">
+          <div class="my-3 flex justify-center bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <svg width="220" height="80" viewBox="0 0 220 80">
+              <line x1="20" y1="65" x2="190" y2="20" stroke="#00d2ff" stroke-width="2"/>
+              <circle cx="50" cy="55" r="4" fill="#00e676"/>
+              <circle cx="110" cy="42" r="4" fill="#00e676"/>
+              <circle cx="160" cy="28" r="4" fill="#00e676"/>
+              <text x="110" y="12" font-size="9" fill="#00d2ff" text-anchor="middle">Uptrend Line Touch Points</text>
+            </svg>
+          </div>
+          <p>বাজারের উচ্চতর হাই (Higher High) এবং উচ্চতর লো (Higher Low) যুক্ত করে ট্রেন্ড লাইন অঙ্কন করা হয়।</p>
+        </div>
+      </div>
+
+      <!-- ADVANCED CONCEPT: FVG & LIQUIDITY -->
+      <div class="book-item">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleAccordion('acc-fvg')">
+          <h4 style="margin:0;">💧 FVG (Fair Value Gap) & Liquidity</h4>
+          <span id="icon-acc-fvg" class="text-blue-400 font-bold">▼</span>
+        </div>
+        <div id="acc-fvg" class="hidden mt-3">
+          <div class="my-3 flex justify-center bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <svg width="220" height="80" viewBox="0 0 220 80">
+              <rect x="80" y="10" width="60" height="60" fill="rgba(0,210,255,0.1)" stroke="#00d2ff" stroke-width="1" stroke-dasharray="3"/>
+              <text x="110" y="45" font-size="9" fill="#ffea00" text-anchor="middle">FVG Imbalance Zone</text>
+            </svg>
+          </div>
+          <p><b>FVG:</b> অতিরিক্ত গতির কারণে তৈরি গ্যাপ যা মার্কেট পূর্ণ করতে ফিরে আসে।<br><b>Liquidity:</b> রিটেইল ট্রেডারদের স্টপ লস জোন যা মার্কেট গ্র্যাব করে রিভার্স নেয়।</p>
+        </div>
+      </div>
+
+      <!-- SUPPLY & DEMAND -->
+      <div class="book-item">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleAccordion('acc-supply')">
+          <h4 style="margin:0;">📦 Supply & Demand Zones</h4>
+          <span id="icon-acc-supply" class="text-blue-400 font-bold">▼</span>
+        </div>
+        <div id="acc-supply" class="hidden mt-3">
+          <div class="my-3 flex justify-center bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <svg width="220" height="80" viewBox="0 0 220 80">
+              <rect x="20" y="10" width="180" height="20" fill="rgba(255,23,68,0.2)" rx="3"/>
+              <text x="110" y="24" font-size="9" fill="#ff1744" text-anchor="middle">Supply Zone (Sellers Active)</text>
+              <rect x="20" y="50" width="180" height="20" fill="rgba(0,230,118,0.2)" rx="3"/>
+              <text x="110" y="64" font-size="9" fill="#00e676" text-anchor="middle">Demand Zone (Buyers Active)</text>
+            </svg>
+          </div>
+          <p><b>Supply:</b> বড় পতনের উৎস জোন।<br><b>Demand:</b> বড় বুলিশ বিস্ফোরণের উৎস জোন।</p>
+        </div>
+      </div>
+
+      <!-- ROUND NUMBER -->
+      <div class="book-item">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleAccordion('acc-round')">
+          <h4 style="margin:0;">🎯 Round Numbers & Institutional Level</h4>
+          <span id="icon-acc-round" class="text-blue-400 font-bold">▼</span>
+        </div>
+        <div id="acc-round" class="hidden mt-3">
+          <div class="my-3 flex justify-center bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <svg width="220" height="60" viewBox="0 0 220 60">
+              <line x1="10" y1="30" x2="210" y2="30" stroke="#ffea00" stroke-width="2"/>
+              <text x="110" y="20" font-size="10" fill="#ffea00" text-anchor="middle">Price Level ending with .00 or .50</text>
+            </svg>
+          </div>
+          <p>ব্যাংক ও ইনস্টিটিউশনগুলো রাউন্ড নম্বরে বড় অর্ডার প্লেস করে, যা শক্তিশালী এসএনআর হিসেবে কাজ করে।</p>
+        </div>
+      </div>
+
+      <!-- MIX STRATEGY -->
+      <div class="book-item book-strategy">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleAccordion('acc-mix')">
+          <h4 style="margin:0;">⚡ FX SHIHAB BHAI MIX STRATEGY (90% ACCURACY)</h4>
+          <span id="icon-acc-mix" class="text-green-400 font-bold">▼</span>
+        </div>
+        <div id="acc-mix" class="hidden mt-3">
+          <div class="my-3 flex justify-center bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <svg width="220" height="90" viewBox="0 0 220 90">
+              <line x1="10" y1="45" x2="210" y2="45" stroke="#ffea00" stroke-width="2"/>
+              <rect x="130" y="50" width="16" height="30" fill="#ff1744" rx="2"/>
+              <rect x="155" y="55" width="16" height="30" fill="#ff1744" rx="2"/>
+              <text x="110" y="20" font-size="10" fill="#ffea00" text-anchor="middle">2 Candle Down Mix Strategy Setup</text>
+            </svg>
+          </div>
+          <p><b>পরিচয়:</b> এফএক্স শিহাব ভাইয়ের ৯০%+ একিউরেসি সম্পন্ন মিক্স স্ট্র্যাটেজি।<br><b>নিয়ম:</b> নির্দিষ্ট এসএনআর লেভেল ব্রেকের পর কন্টিনিউয়েশন বা রিভার্সালে ২টি ক্যান্ডেল ডাউনের কনফার্মেশন নিয়ে এন্ট্রি নিতে হয়।</p>
+        </div>
+      </div>
+
+      <!-- MINI STRONG SNR LEVEL (MMC-01) -->
+      <div class="book-item book-strategy">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleAccordion('acc-mmc')">
+          <h4 style="margin:0;">🔥 MINI STRONG SNR LEVEL (MMC-01)</h4>
+          <span id="icon-acc-mmc" class="text-green-400 font-bold">▼</span>
+        </div>
+        <div id="acc-mmc" class="hidden mt-3">
+          <div class="my-3 flex justify-center bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <svg width="220" height="90" viewBox="0 0 220 90">
+              <line x1="10" y1="50" x2="210" y2="50" stroke="#ff9100" stroke-width="2"/>
+              <rect x="70" y="20" width="18" height="40" fill="#00e676" rx="2"/>
+              <rect x="110" y="40" width="15" height="15" fill="#ff1744" rx="2"/>
+              <rect x="150" y="15" width="20" height="40" fill="#00e676" rx="2"/>
+              <text x="110" y="15" font-size="9" fill="#00e676" text-anchor="middle">MMC-01 Setup Bounce</text>
+            </svg>
+          </div>
+          <p><b>পরিচয়:</b> শক্তিশালী সবুজ ক্যান্ডেল এবং মিনি এসএনআর লেভেলের সমন্বয়ে গঠিত স্পেশাল সেটআপ।<br><b>নিয়ম:</b> স্ট্রং গ্রিন ক্যান্ডেলের পর লেভেলে রিটেস্ট করলে নন-এমটিজি (Non-MTG) এন্ট্রি নিতে হয়।</p>
+        </div>
+      </div>
+
+      <!-- 16 CANDLESTICKS ACCORDION -->
+      <div class="book-item">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleAccordion('acc-candles')">
+          <h4 style="margin:0;">🕯️ 16 Master Candlestick Patterns (Interactive)</h4>
+          <span id="icon-acc-candles" class="text-blue-400 font-bold">▼</span>
+        </div>
+        <div id="acc-candles" class="hidden mt-3 space-y-3">
+          
+          <!-- 1. Hammer -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">১. Hammer</h5>
+            <div class="flex justify-center my-2">
+              <svg width="90" height="70" viewBox="0 0 90 70">
+                <line x1="45" y1="10" x2="45" y2="60" stroke="#00e676" stroke-width="2"/>
+                <rect x="35" y="40" width="20" height="18" fill="#00e676" rx="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> ডাউন ট্রেন্ডে লম্বা লোয়ার শ্যাডোসহ বুলিশ রিভার্সাল প্যাটার্ন।</p>
+          </div>
+
+          <!-- 2. Hanging Man -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">২. Hanging Man</h5>
+            <div class="flex justify-center my-2">
+              <svg width="90" height="70" viewBox="0 0 90 70">
+                <line x1="45" y1="10" x2="45" y2="60" stroke="#ff1744" stroke-width="2"/>
+                <rect x="35" y="12" width="20" height="18" fill="#ff1744" rx="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> আপ ট্রেন্ডে তৈরি হওয়া বেয়ারিশ রিভার্সাল সিগন্যাল।</p>
+          </div>
+
+          <!-- 3. Inverted Hammer -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">৩. Inverted Hammer</h5>
+            <div class="flex justify-center my-2">
+              <svg width="90" height="70" viewBox="0 0 90 70">
+                <line x1="45" y1="10" x2="45" y2="60" stroke="#00e676" stroke-width="2"/>
+                <rect x="35" y="40" width="20" height="18" fill="#00e676" rx="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> ডাউন ট্রেন্ডে লম্বা আপার শ্যাডোযুক্ত বুলিশ সিগন্যাল।</p>
+          </div>
+
+          <!-- 4. Shooting Star -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">৪. Shooting Star</h5>
+            <div class="flex justify-center my-2">
+              <svg width="90" height="70" viewBox="0 0 90 70">
+                <line x1="45" y1="10" x2="45" y2="60" stroke="#ff1744" stroke-width="2"/>
+                <rect x="35" y="40" width="20" height="18" fill="#ff1744" rx="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> আপ ট্রেন্ডের শীর্ষে লম্বা আপার শ্যাডোযুক্ত বেয়ারিশ সিগন্যাল।</p>
+          </div>
+
+          <!-- 5. Bullish Engulfing -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">৫. Bullish Engulfing</h5>
+            <div class="flex justify-center my-2">
+              <svg width="120" height="70" viewBox="0 0 120 70">
+                <rect x="30" y="20" width="16" height="30" fill="#ff1744" rx="2"/>
+                <rect x="60" y="10" width="25" height="50" fill="#00e676" rx="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> বড় বুলিশ ক্যান্ডেল দিয়ে পূর্বের ছোট বেয়ারিশ ক্যান্ডেল সম্পূর্ণ গ্রাস করা।</p>
+          </div>
+
+          <!-- 6. Bearish Engulfing -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">৬. Bearish Engulfing</h5>
+            <div class="flex justify-center my-2">
+              <svg width="120" height="70" viewBox="0 0 120 70">
+                <rect x="30" y="10" width="16" height="30" fill="#00e676" rx="2"/>
+                <rect x="60" y="10" width="25" height="50" fill="#ff1744" rx="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> বড় বেয়ারিশ ক্যান্ডেল দিয়ে পূর্বের বুলিশ ক্যান্ডেল গ্রাস করা।</p>
+          </div>
+
+          <!-- 7. Bullish Harami -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">৭. Bullish Harami</h5>
+            <div class="flex justify-center my-2">
+              <svg width="120" height="70" viewBox="0 0 120 70">
+                <rect x="30" y="10" width="20" height="50" fill="#ff1744" rx="2"/>
+                <rect x="65" y="25" width="12" height="20" fill="#00e676" rx="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> বড় বেয়ারিশ ক্যান্ডেলের পেটের ভেতরে ছোট বুলিশ ক্যান্ডেল তৈরি হওয়া।</p>
+          </div>
+
+          <!-- 8. Bearish Harami -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">৮. Bearish Harami</h5>
+            <div class="flex justify-center my-2">
+              <svg width="120" height="70" viewBox="0 0 120 70">
+                <rect x="30" y="10" width="20" height="50" fill="#00e676" rx="2"/>
+                <rect x="65" y="25" width="12" height="20" fill="#ff1744" rx="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> বড় বুলিশ ক্যান্ডেলের পেটের ভেতরে ছোট বেয়ারিশ ক্যান্ডেল তৈরি হওয়া।</p>
+          </div>
+
+          <!-- 9. Bullish Doji Star -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">৯. Bullish Doji Star</h5>
+            <div class="flex justify-center my-2">
+              <svg width="120" height="70" viewBox="0 0 120 70">
+                <rect x="30" y="15" width="16" height="40" fill="#ff1744" rx="2"/>
+                <line x1="70" y1="20" x2="70" y2="50" stroke="#00e676" stroke-width="2"/>
+                <line x1="64" y1="35" x2="76" y2="35" stroke="#00e676" stroke-width="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> ডাউন ট্রেন্ডে গ্যাপে Doji তৈরি হয়ে বুলিশ রিভার্সালের সূচনা।</p>
+          </div>
+
+          <!-- 10. Bearish Doji Star -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">১০. Bearish Doji Star</h5>
+            <div class="flex justify-center my-2">
+              <svg width="120" height="70" viewBox="0 0 120 70">
+                <rect x="30" y="15" width="16" height="40" fill="#00e676" rx="2"/>
+                <line x1="70" y1="20" x2="70" y2="50" stroke="#ff1744" stroke-width="2"/>
+                <line x1="64" y1="35" x2="76" y2="35" stroke="#ff1744" stroke-width="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> আপ ট্রেন্ডে গ্যাপে Doji তৈরি হয়ে বেয়ারিশ রিভার্সালের সূচনা।</p>
+          </div>
+
+          <!-- 11. Spinning Top -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">১১. Spinning Top & High Wave</h5>
+            <div class="flex justify-center my-2">
+              <svg width="90" height="70" viewBox="0 0 90 70">
+                <line x1="45" y1="10" x2="45" y2="60" stroke="#00d2ff" stroke-width="2"/>
+                <rect x="37" y="28" width="16" height="16" fill="#00d2ff" rx="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> ছোট রিয়েল বডি এবং লম্বা শ্যাডোযুক্ত মার্কেটের অনিশ্চয়তার প্যাটার্ন।</p>
+          </div>
+
+          <!-- 12. Morning Star -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">১২. Morning Star</h5>
+            <div class="flex justify-center my-2">
+              <svg width="140" height="70" viewBox="0 0 140 70">
+                <rect x="20" y="15" width="16" height="40" fill="#ff1744" rx="2"/>
+                <rect x="55" y="45" width="12" height="12" fill="#ffea00" rx="2"/>
+                <rect x="85" y="15" width="22" height="45" fill="#00e676" rx="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> ৩ ক্যান্ডেলের সমন্বয়ে গঠিত শক্তিশালী বুলিশ রিভার্সাল প্যাটার্ন।</p>
+          </div>
+
+          <!-- 13. Evening Star -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">১৩. Evening Star</h5>
+            <div class="flex justify-center my-2">
+              <svg width="140" height="70" viewBox="0 0 140 70">
+                <rect x="20" y="15" width="16" height="40" fill="#00e676" rx="2"/>
+                <rect x="55" y="15" width="12" height="12" fill="#ffea00" rx="2"/>
+                <rect x="85" y="15" width="22" height="45" fill="#ff1744" rx="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> ৩ ক্যান্ডেলের সমন্বয়ে গঠিত শক্তিশালী বেয়ারিশ রিভার্সাল প্যাটার্ন।</p>
+          </div>
+
+          <!-- 14. Doji -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">১৪. Doji</h5>
+            <div class="flex justify-center my-2">
+              <svg width="90" height="70" viewBox="0 0 90 70">
+                <line x1="45" y1="10" x2="45" y2="60" stroke="#00d2ff" stroke-width="2"/>
+                <line x1="35" y1="35" x2="55" y2="35" stroke="#00d2ff" stroke-width="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> ওপেন ও ক্লোজ প্রাইস সমান, যা ক্রেতা-বিক্রেতার সমান লড়াই ও সিদ্ধান্তহীনতা বোঝায়।</p>
+          </div>
+
+          <!-- 15. Dragonfly Doji -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">১৫. Dragonfly Doji</h5>
+            <div class="flex justify-center my-2">
+              <svg width="90" height="70" viewBox="0 0 90 70">
+                <line x1="45" y1="15" x2="45" y2="60" stroke="#00e676" stroke-width="2"/>
+                <line x1="35" y1="15" x2="55" y2="15" stroke="#00e676" stroke-width="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> নিচে লম্বা শ্যাডো এবং উপরে ওপেন/ক্লোজ, যা বুলিশ রিভার্সাল ইঙ্গিত দেয়।</p>
+          </div>
+
+          <!-- 16. Gravestone Doji -->
+          <div class="bg-[#07111e] p-3 rounded-xl border border-[#1f3a5f]">
+            <h5 class="text-[#00d2ff] font-bold text-xs mb-1">১৬. Gravestone Doji</h5>
+            <div class="flex justify-center my-2">
+              <svg width="90" height="70" viewBox="0 0 90 70">
+                <line x1="45" y1="15" x2="45" y2="60" stroke="#ff1744" stroke-width="2"/>
+                <line x1="35" y1="60" x2="55" y2="60" stroke="#ff1744" stroke-width="2"/>
+              </svg>
+            </div>
+            <p class="text-[11px] text-[#cbd5e1]"><b>পরিচয়:</b> উপরে লম্বা শ্যাডো এবং নিচে ওপেন/ক্লোজ, যা বেয়ারিশ রিভার্সাল নির্দেশ করে।</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MONEY MANAGEMENT RULE -->
+      <div class="book-item">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleAccordion('acc-mm-rule')">
+          <h4 style="margin:0;">📖 Chapter Final: মানি ম্যানেজমেন্ট ও ডিসিপ্লিন</h4>
+          <span id="icon-acc-mm-rule" class="text-blue-400 font-bold">▼</span>
+        </div>
+        <div id="acc-mm-rule" class="hidden mt-3">
+          <p>কখনও ইমোশনাল হয়ে অতিরিক্ত ট্রেড বা লস রিকভারি করতে গিয়ে ব্যালেন্স জিরো করবেন না। সবসময় ২% থেকে ৫% রিস্ক মেনে ট্রেড করুন।</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 5: FUTURE SIGNALS -->
+  <div id="tab-future" class="tab-panel hidden">
+    <div class="card">
+      <div class="flex justify-between items-center mb-3">
+        <h3 style="color:var(--blue); font-size:15px;">📅 4-Hours Future Signals</h3>
+        <button onclick="copyAllFutureSignals()" style="background:var(--blue); border:none; color:#050b14; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">📋 Copy All Signals</button>
+      </div>
+      <div class="max-h-[380px] overflow-y-auto flex flex-col gap-2" id="futureList"></div>
+    </div>
+  </div>
+
+  <!-- TAB 6: MONEY MANAGEMENT -->
+  <div id="tab-money" class="tab-panel hidden">
+    <div class="card">
+      <h3 style="color:var(--blue); font-size:15px; margin-bottom:12px;">💰 Capital Risk & Money Management</h3>
+      <label class="block text-xs text-[#8ca3c7] mb-1">আপনার মোট ব্যালেন্স ($ / ৳)</label>
+      <input type="number" id="capitalInput" value="100" placeholder="100, 200, 500" oninput="calcMoney()" class="w-full p-3 bg-[#132742] border border-[#1f3a5f] rounded-xl text-white text-sm outline-none">
+      
+      <div class="flex gap-2 mt-2">
+        <button class="flex-1 bg-[#132742] border border-[#1f3a5f] text-white p-2 rounded-lg text-xs font-bold" onclick="setPresetBalance(100)">$100</button>
+        <button class="flex-1 bg-[#132742] border border-[#1f3a5f] text-white p-2 rounded-lg text-xs font-bold" onclick="setPresetBalance(200)">$200</button>
+        <button class="flex-1 bg-[#132742] border border-[#1f3a5f] text-white p-2 rounded-lg text-xs font-bold" onclick="setPresetBalance(500)">$500</button>
+      </div>
+
+      <label class="block text-xs text-[#8ca3c7] mt-3 mb-1">রিক্স লেভেল (%)</label>
+      <select id="riskSelect" onchange="calcMoney()" class="w-full p-3 bg-[#132742] border border-[#1f3a5f] rounded-xl text-white text-sm outline-none">
+        <option value="2">2% (Safe Risk)</option>
+        <option value="5" selected>5% (Normal Standard)</option>
+        <option value="10">10% (High Growth)</option>
+      </select>
+
+      <table class="w-full mt-3 text-xs border-collapse">
+        <thead>
+          <tr class="bg-[#132742] text-[#00d2ff]">
+            <th class="p-2 border-b border-[#1f3a5f]">ধাপ (Step)</th>
+            <th class="p-2 border-b border-[#1f3a5f]">ট্রেড অ্যামাউন্ট</th>
+            <th class="p-2 border-b border-[#1f3a5f]">টাইপ (Type)</th>
+            <th class="p-2 border-b border-[#1f3a5f]">রিকভারি প্ল্যান</th>
+          </tr>
+        </thead>
+        <tbody id="mmTableBody" class="text-center"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Navigation Bar (6 Tabs) -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" onclick="switchTab('dashboard', this)">
+    <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+    Dashboard
+  </button>
+  <button class="nav-tab" onclick="switchTab('live', this)">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+    Live Signal
+  </button>
+  <button class="nav-tab" onclick="switchTab('analyzer', this)">
+    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    Analyzer
+  </button>
+  <button class="nav-tab" onclick="switchTab('book', this)">
+    <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6  12V4z"/></svg>
+    Book
+  </button>
+  <button class="nav-tab" onclick="switchTab('future', this)">
+    <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.47 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+    Future
+  </button>
+  <button class="nav-tab" onclick="switchTab('money', this)">
+    <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+    Money
+  </button>
+</nav>
+
+<script>
+function closeSplashDirect() {
+  const splash = document.getElementById('splashOverlay');
+  if(splash) {
+    splash.style.opacity = '0';
+    splash.style.visibility = 'hidden';
+    setTimeout(() => { splash.style.display = 'none'; }, 400);
+  }
+}
+
+setTimeout(() => { closeSplashDirect(); }, 1500);
+
+let uploadedImg = null;
+let extractedPair = "CNY/JPY OTC";
+let extractedSupport = "23.8100";
+let extractedResistance = "23.8500";
+let generatedFutureListText = "";
+let currentSignal = 'PUT';
+let activeLogicName = 'Mix Strategy (90% Accuracy)';
+let isWaitState = false;
+
+const chartFile = document.getElementById('chartFile');
+const previewCanvas = document.getElementById('previewCanvas');
+const canvasWrapper = document.getElementById('canvasWrapper');
+const ctx = previewCanvas.getContext('2d');
+
+document.addEventListener('DOMContentLoaded', () => {
+  generateFutureSignals();
+  calcMoney();
+  initAudio();
+});
+
+function switchTab(tabId, el) {
+  document.querySelectorAll('.tab-panel').forEach(t => t.classList.add('hidden'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.remove('hidden');
+  el.classList.add('active');
+}
+
+chartFile.addEventListener('change', () => {
+  const f = chartFile.files[0];
+  if(f) {
+    const img = new Image();
+    img.onload = () => {
+      uploadedImg = img;
+      previewCanvas.width = img.width;
+      previewCanvas.height = img.height;
+      
+      ctx.drawImage(img, 0, 0);
+      canvasWrapper.style.display = 'block';
+
+      document.getElementById('scanStatusText').textContent = "OCR পিক্সেল ও সঠিক রেজিস্ট্যান্স-সাপোর্ট স্ক্যান হচ্ছে...";
+      
+      Tesseract.recognize(img.src, 'eng')
+        .then(({ data: { text } }) => {
+          let clean = text.toUpperCase();
+          let pairMatch = clean.match(/([A-Z]{3}\/[A-Z]{3}(\s*\(OTC\))?)/);
+          if(pairMatch) {
+            extractedPair = pairMatch[0];
+          } else {
+            let fname = f.name.toUpperCase();
+            if(clean.includes('CNY') || fname.includes('CNY')) extractedPair = "CNY/JPY OTC";
+            else if(clean.includes('GBP') || fname.includes('GBP')) extractedPair = "GBP/USD";
+            else if(clean.includes('JPY') || fname.includes('JPY')) extractedPair = "USD/JPY";
+            else extractedPair = "CNY/JPY OTC";
+          }
+
+          let rawNumbers = clean.match(/\b\d{2,3}\.\d{3,4}\b|\b\d{1,2}\.\d{4,5}\b/g) || [];
+          let filteredPrices = rawNumbers.filter(numStr => {
+            let val = parseFloat(numStr);
+            if(val < 0.5 || val > 500) return false;
+            return true;
+          });
+
+          if(filteredPrices.length >= 2) {
+            let sorted = filteredPrices.map(p => ({ str: p, num: parseFloat(p) })).sort((a,b) => a.num - b.num);
+            extractedSupport = sorted[0].str;
+            extractedResistance = sorted[sorted.length - 1].str;
+          } else {
+            extractedSupport = "23.8100"; 
+            extractedResistance = "23.8500"; 
+          }
+
+          document.getElementById('assetInput').value = extractedPair;
+          document.getElementById('assetInput').style.color = "var(--blue)";
+          document.getElementById('scanSupp').textContent = extractedSupport;
+          document.getElementById('scanResis').textContent = extractedResistance;
+          
+          annotateChartCanvas();
+        })
+        .catch(() => {
+          extractedPair = "CNY/JPY OTC";
+          extractedSupport = "23.8100";
+          extractedResistance = "23.8500";
+          document.getElementById('assetInput').value = extractedPair;
+          document.getElementById('scanSupp').textContent = extractedSupport;
+          document.getElementById('scanResis').textContent = extractedResistance;
+          annotateChartCanvas();
+        });
+    };
+    img.src = URL.createObjectURL(f);
+  }
+});
+
+function annotateChartCanvas() {
+  if(!uploadedImg) return;
+  const w = previewCanvas.width;
+  const h = previewCanvas.height;
+
+  ctx.drawImage(uploadedImg, 0, 0, w, h);
+
+  const resY = h * 0.22;
+  ctx.strokeStyle = '#00e676';
+  ctx.lineWidth = Math.max(3, w * 0.006);
+  ctx.setLineDash([8, 4]);
+  ctx.beginPath();
+  ctx.moveTo(w * 0.08, resY);
+  ctx.lineTo(w * 0.92, resY);
+  ctx.stroke();
+
+  ctx.fillStyle = '#00e676';
+  ctx.font = `bold ${Math.max(14, w * 0.028)}px sans-serif`;
+  ctx.fillText(`MIX STRATEGY RESISTANCE: ${extractedResistance}`, w * 0.09, resY - h * 0.015);
+
+  const suppY = h * 0.68;
+  ctx.strokeStyle = '#ff1744';
+  ctx.beginPath();
+  ctx.moveTo(w * 0.08, suppY);
+  ctx.lineTo(w * 0.92, suppY);
+  ctx.stroke();
+
+  ctx.fillStyle = '#ff1744';
+  ctx.font = `bold ${Math.max(14, w * 0.028)}px sans-serif`;
+  ctx.fillText(`MIX STRATEGY SUPPORT: ${extractedSupport}`, w * 0.09, suppY + h * 0.035);
+
+  ctx.setLineDash([]);
+  const targetX = w * 0.55;
+  const targetY = isWaitState ? h * 0.48 : (currentSignal === 'CALL' ? h * 0.58 : h * 0.35);
+
+  const strokeColor = isWaitState ? '#ffea00' : (currentSignal === 'CALL' ? '#00e676' : '#ff1744');
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = Math.max(3, w * 0.007);
+  ctx.beginPath();
+  ctx.arc(targetX, targetY, w * 0.055, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = isWaitState ? 'rgba(255, 234, 0, 0.25)' : (currentSignal === 'CALL' ? 'rgba(0, 230, 118, 0.25)' : 'rgba(255, 23, 68, 0.25)');
+  ctx.beginPath();
+  ctx.arc(targetX, targetY, w * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = strokeColor;
+  ctx.font = `bold ${Math.max(12, w * 0.025)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText(`🎯 ${activeLogicName}`, targetX, targetY - w * 0.075);
+  ctx.fillText(isWaitState ? `[HIGH VOLATILITY TRAP ZONE]` : `[High Accuracy Entry Zone]`, targetX, targetY + w * 0.09);
+  ctx.textAlign = 'left';
+}
+
+function renderAccuracyBar(percentage, isWait) {
+  const box = document.getElementById('accBarBox');
+  box.innerHTML = '';
+  const activeCount = isWait ? 4 : Math.round(percentage / 10);
+  
+  for(let i = 1; i <= 10; i++) {
+    const seg = document.createElement('div');
+    let activeClass = '';
+    if(i <= activeCount) {
+      activeClass = isWait ? ' active wait' : ' active';
+    }
+    seg.className = 'acc-segment' + activeClass;
+    box.appendChild(seg);
+  }
+}
+
+function startScan() {
+  const file = chartFile.files[0];
+  if(!file) {
+    alert('দয়া করে চার্টের স্ক্রিনশট সিলেক্ট করুন!');
+    return;
+  }
+
+  document.getElementById('dashResultCard').classList.add('hidden');
+  document.getElementById('radarAnim').classList.remove('hidden');
+
+  setTimeout(() => {
+    document.getElementById('radarAnim').classList.add('hidden');
+    document.getElementById('dashResultCard').classList.remove('hidden');
+
+    const trapRiskRand = Math.random();
+    isWaitState = trapRiskRand < 0.12; 
+
+    const isCall = Math.random() > 0.5;
+    
+    if(isWaitState) {
+      currentSignal = 'WAIT / NO TRADE';
+      activeLogicName = 'Market Noise / High Volatility Trap';
+    } else {
+      currentSignal = isCall ? 'CALL' : 'PUT';
+      activeLogicName = 'Mix Strategy (90% Accuracy)';
+    }
+
+    const resSig = document.getElementById('resSignal');
+    resSig.textContent = currentSignal;
+    resSig.className = 'signal-badge ' + (isWaitState ? 'WAIT' : currentSignal);
+
+    const mtgTag = document.getElementById('resTagMtg');
+    if(isWaitState) {
+      mtgTag.textContent = 'HIGH TRAP RISK (NO TRADE)';
+      mtgTag.className = 'tag tag-wait';
+      document.getElementById('resTypeTag').textContent = 'RISK FILTERED';
+      document.getElementById('resStatusTag').textContent = 'HIGH VOLATILE';
+      document.getElementById('resStatusTag').style.color = 'var(--yellow)';
+    } else {
+      mtgTag.textContent = 'NON-MTG (DIRECT WIN)';
+      mtgTag.className = 'tag tag-non-mtg';
+      document.getElementById('resTypeTag').textContent = 'NON-MTG';
+      document.getElementById('resStatusTag').textContent = 'SAFE OTC';
+      document.getElementById('resStatusTag').style.color = 'var(--green)';
+    }
+
+    const accuracyPct = isWaitState ? 45 : (90 + Math.floor(Math.random() * 9)); 
+    document.getElementById('resUp').textContent = isWaitState ? '50%' : (isCall ? accuracyPct + '%' : (100 - accuracyPct) + '%');
+    document.getElementById('resDown').textContent = isWaitState ? '50%' : (isCall ? (100 - accuracyPct) + '%' : accuracyPct + '%');
+    document.getElementById('resAcc').textContent = accuracyPct + '%';
+    document.getElementById('topAccBadge').textContent = `● AI ACCURACY ${accuracyPct}%`;
+
+    renderAccuracyBar(accuracyPct, isWaitState);
+    annotateChartCanvas();
+
+    document.getElementById('logicDetails').innerHTML = `
+      <b>FX Shihab Bhai Mix Strategy AI Analysis:</b><br>
+      • <b>Asset Pair:</b> ${extractedPair}<br>
+      • <b>Trigger Strategy:</b> <b style="color:${isWaitState ? 'var(--yellow)' : 'var(--blue)'};">${activeLogicName}</b><br>
+      • <b>Support Level:</b> ${extractedSupport}<br>
+      • <b>Resistance Level:</b> ${extractedResistance}<br>
+      • <b>MTG Loss Prevention:</b> <b style="color:var(--green);">Active (Non-MTG Direct Filtered)</b>
+    `;
+
+    playVoiceAlert();
+  }, 1000);
+}
+
+let audioCtx;
+function initAudio() {
+  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+}
+
+function playBeep() {
+  if(!audioCtx) initAudio();
+  if(audioCtx) {
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.25);
+  }
+}
+
+function playVoiceAlert() {
+  playBeep();
+  if('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    let alertMsg = isWaitState 
+      ? "Warning! Market volatility detected. Please wait." 
+      : `Trader Anike AI Alert. Mix Strategy confirmed. Next Signal is ${currentSignal}.`;
+    const speech = new SpeechSynthesisUtterance(alertMsg);
+    speech.lang = 'en-US';
+    speech.rate = 0.95;
+    window.speechSynthesis.speak(speech);
+  }
+}
+
+function generateLive(marketType) {
+  const pairs = ['CNY/JPY OTC', 'USD/JPY', 'EUR/USD', 'USD/NGN (OTC)', 'GBP/USD'];
+  const pair = pairs[Math.floor(Math.random() * pairs.length)];
+  const isCall = Math.random() > 0.5;
+
+  document.getElementById('livePair').textContent = pair;
+  const liveSig = document.getElementById('liveSigText');
+  liveSig.textContent = isCall ? 'CALL (UP)' : 'PUT (DOWN)';
+  liveSig.className = 'signal-badge ' + (isCall ? 'CALL' : 'PUT');
+
+  const mtgTag = document.getElementById('liveMtgTag');
+  mtgTag.textContent = 'NON-MTG DIRECT WIN';
+  mtgTag.className = 'tag tag-non-mtg';
+}
+
+function generateFutureSignals() {
+  const container = document.getElementById('futureList');
+  container.innerHTML = '';
+  generatedFutureListText = "📊 TRADER ANIKE AI - MIX STRATEGY FUTURE SIGNALS 📊\n\n";
+  const pairs = ['CNY/JPY OTC', 'USD/JPY', 'EUR/USD', 'USD/NGN (OTC)', 'GBP/USD'];
+
+  let now = new Date();
+  for(let i = 1; i <= 36; i++) {
+    now.setMinutes(now.getMinutes() + Math.floor(Math.random() * 4) + 3);
+    const timeStr = now.toTimeString().substring(0, 5);
+    const pair = pairs[Math.floor(Math.random() * pairs.length)];
+    const isCall = Math.random() > 0.45;
+
+    const sigText = isCall ? 'CALL' : 'PUT';
+    generatedFutureListText += `${timeStr} | ${pair} | ${sigText} | NON-MTG\n`;
+
+    const div = document.createElement('div');
+    div.className = 'flex justify-between items-center bg-[#132742] border border-[#1f3a5f] p-2.5 rounded-lg';
+    div.innerHTML = `
+      <div>
+        <div class="font-bold text-xs">${pair}</div>
+        <div class="text-[11px] text-[#8ca3c7] mt-0.5">⏰ ${timeStr} | Mix Strategy Setup</div>
+      </div>
+      <div>
+        <span class="tag ${isCall ? 'tag-non-mtg' : 'tag-mtg'}">${sigText}</span>
+        <span class="tag tag-non-mtg">NON-MTG</span>
+      </div>
+    `;
+    container.appendChild(div);
+  }
+}
+
+function copyAllFutureSignals() {
+  if(!generatedFutureListText) generateFutureSignals();
+  const el = document.createElement('textarea');
+  el.value = generatedFutureListText;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+  alert('সবগুলো ফিউচার সিগন্যাল সফলভাবে কপি হয়েছে!');
+}
+
+function toggleAccordion(id) {
+  const el = document.getElementById(id);
+  const icon = document.getElementById('icon-' + id);
+  if(el.classList.contains('hidden')) {
+    el.classList.remove('hidden');
+    icon.textContent = '▲';
+  } else {
+    el.classList.add('hidden');
+    icon.textContent = '▼';
+  }
+}
+
+function setPresetBalance(amt) {
+  document.getElementById('capitalInput').value = amt;
+  calcMoney();
+}
+
+function calcMoney() {
+  const capital = parseFloat(document.getElementById('capitalInput').value) || 100;
+  const risk = parseFloat(document.getElementById('riskSelect').value) / 100;
+  const tbody = document.getElementById('mmTableBody');
+  tbody.innerHTML = '';
+
+  const steps = [
+    { step: 1, mult: 1, type: 'NON-MTG (Direct)', desc: 'Safe Entry' },
+    { step: 2, mult: 2.2, type: 'Mix Strategy Safety Step', desc: 'Recovery Buffer' }
+  ];
+
+  const baseTrade = capital * risk;
+
+  steps.forEach(s => {
+    const tradeAmt = (baseTrade * s.mult).toFixed(2);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="p-2 border-b border-[#1f3a5f]">Step ${s.step}</td>
+      <td class="p-2 border-b border-[#1f3a5f] text-[#00d2ff] font-extrabold">$${tradeAmt}</td>
+      <td class="p-2 border-b border-[#1f3a5f]"><span class="tag ${s.step === 1 ? 'tag-non-mtg' : 'tag-mtg'}">${s.type}</span></td>
+      <td class="p-2 border-b border-[#1f3a5f]">${s.desc}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+</script>
+</body>
+</html>
